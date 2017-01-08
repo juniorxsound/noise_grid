@@ -4,8 +4,19 @@
   "description": "Personal portfolio site",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "http-server",
+    "watch": "watchify js/app.js -o dist/bundle.js -v",
+    "build": "browserify js/app.js  | uglifyjs -mc warnings=false > dist/bundle.js"
   },
   "author": "Or Fleisher",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "bootstrap": "^3.3.7",
+    "jquery": "^3.1.1"
+  },
+  "devDependencies": {
+    "uglify-js": "^2.7.5",
+    "watchify": "^3.8.0",
+    "browserify": "^13.3.0",
+  }
 }

@@ -1,15 +1,17 @@
 
 //Components
-import {projects, experiments} from "./projects";
+// import {projects, experiments} from "./projects";
 
 //Libraries
 let $ = require('jquery');
-let glslify = require('glslify');
-
-console.log(glslify);
+let glsl = require('glslify');
 
 // 3D Global Variables
 let container, renderer, scene, camera, mesh, material, fov = 80;
+
+//Shaders
+let noiseVertex = glsl.file('../shaders/noise.vert');
+let noiseFragment = glsl.file('../shaders/noise.frag');
 
 $(document).ready(()=>{
     //Initialise the 3D scene
@@ -32,7 +34,7 @@ function init3D() {
 
     //Setup the camera
     camera = new THREE.PerspectiveCamera( fov, window.innerWidth / window.innerHeight, 1, 10000 );
-	camera.position.z = 10;
+	camera.position.z = 15;
 	camera.target = new THREE.Vector3( 0, 0, 0 );
 	scene.add( camera );
 
@@ -44,8 +46,8 @@ function init3D() {
 			weight: { type: "f", value: 5 }
 		},
 
-    vertexShader: document.getElementById( 'vertexShader' ).textContent,
-	fragmentShader: document.getElementById( 'fragmentShader' ).textContent,
+    vertexShader: noiseVertex,
+	fragmentShader: noiseFragment,
     wireframe: true
 
 	});

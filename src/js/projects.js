@@ -1,4 +1,4 @@
-var projects = {
+let projects = {
     "Tzina": {
         year: 2016,
         role: "Technical Director",
@@ -31,7 +31,7 @@ var projects = {
     }
 }
 
-var experiments = {
+let experiments = {
 
 }
 

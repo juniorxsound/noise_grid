@@ -10233,132 +10233,85 @@ return jQuery;
 } );
 
 },{}],3:[function(require,module,exports){
-'use strict';
 
-var _projects = require('./projects');
+//Components
+// import {projects, experiments} from "./projects";
 
 //Libraries
-var $ = require('jquery');
-//Components
-
-var glslify = require('glslify');
-
-console.log(glslify);
+let $ = require('jquery');
+let glsl = require('glslify');
 
 // 3D Global Variables
-var container = void 0,
-    renderer = void 0,
-    scene = void 0,
-    camera = void 0,
-    mesh = void 0,
-    material = void 0,
-    fov = 80;
+let container, renderer, scene, camera, mesh, material, fov = 80;
 
-$(document).ready(function () {
-				//Initialise the 3D scene
-				init3D();
+//Shaders
+let noiseVertex = glsl(["#define GLSLIFY 1\nvec3 mod289(vec3 x)\n{\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\nvec4 mod289(vec4 x)\n{\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\nvec4 permute(vec4 x)\n{\n  return mod289(((x*34.0)+1.0)*x);\n}\nvec4 taylorInvSqrt(vec4 r)\n{\n  return 1.79284291400159 - 0.85373472095314 * r;\n}\nvec3 fade(vec3 t) {\n  return t*t*t*(t*(t*6.0-15.0)+10.0);\n}\n// Classic Perlin noise\nfloat cnoise(vec3 P)\n{\n  vec3 Pi0 = floor(P); // Integer part for indexing\n  vec3 Pi1 = Pi0 + vec3(1.0); // Integer part + 1\n  Pi0 = mod289(Pi0);\n  Pi1 = mod289(Pi1);\n  vec3 Pf0 = fract(P); // Fractional part for interpolation\n  vec3 Pf1 = Pf0 - vec3(1.0); // Fractional part - 1.0\n  vec4 ix = vec4(Pi0.x, Pi1.x, Pi0.x, Pi1.x);\n  vec4 iy = vec4(Pi0.yy, Pi1.yy);\n  vec4 iz0 = Pi0.zzzz;\n  vec4 iz1 = Pi1.zzzz;\n  vec4 ixy = permute(permute(ix) + iy);\n  vec4 ixy0 = permute(ixy + iz0);\n  vec4 ixy1 = permute(ixy + iz1);\n  vec4 gx0 = ixy0 * (1.0 / 7.0);\n  vec4 gy0 = fract(floor(gx0) * (1.0 / 7.0)) - 0.5;\n  gx0 = fract(gx0);\n  vec4 gz0 = vec4(0.5) - abs(gx0) - abs(gy0);\n  vec4 sz0 = step(gz0, vec4(0.0));\n  gx0 -= sz0 * (step(0.0, gx0) - 0.5);\n  gy0 -= sz0 * (step(0.0, gy0) - 0.5);\n  vec4 gx1 = ixy1 * (1.0 / 7.0);\n  vec4 gy1 = fract(floor(gx1) * (1.0 / 7.0)) - 0.5;\n  gx1 = fract(gx1);\n  vec4 gz1 = vec4(0.5) - abs(gx1) - abs(gy1);\n  vec4 sz1 = step(gz1, vec4(0.0));\n  gx1 -= sz1 * (step(0.0, gx1) - 0.5);\n  gy1 -= sz1 * (step(0.0, gy1) - 0.5);\n  vec3 g000 = vec3(gx0.x,gy0.x,gz0.x);\n  vec3 g100 = vec3(gx0.y,gy0.y,gz0.y);\n  vec3 g010 = vec3(gx0.z,gy0.z,gz0.z);\n  vec3 g110 = vec3(gx0.w,gy0.w,gz0.w);\n  vec3 g001 = vec3(gx1.x,gy1.x,gz1.x);\n  vec3 g101 = vec3(gx1.y,gy1.y,gz1.y);\n  vec3 g011 = vec3(gx1.z,gy1.z,gz1.z);\n  vec3 g111 = vec3(gx1.w,gy1.w,gz1.w);\n  vec4 norm0 = taylorInvSqrt(vec4(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));\n  g000 *= norm0.x;\n  g010 *= norm0.y;\n  g100 *= norm0.z;\n  g110 *= norm0.w;\n  vec4 norm1 = taylorInvSqrt(vec4(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));\n  g001 *= norm1.x;\n  g011 *= norm1.y;\n  g101 *= norm1.z;\n  g111 *= norm1.w;\n  float n000 = dot(g000, Pf0);\n  float n100 = dot(g100, vec3(Pf1.x, Pf0.yz));\n  float n010 = dot(g010, vec3(Pf0.x, Pf1.y, Pf0.z));\n  float n110 = dot(g110, vec3(Pf1.xy, Pf0.z));\n  float n001 = dot(g001, vec3(Pf0.xy, Pf1.z));\n  float n101 = dot(g101, vec3(Pf1.x, Pf0.y, Pf1.z));\n  float n011 = dot(g011, vec3(Pf0.x, Pf1.yz));\n  float n111 = dot(g111, Pf1);\n  vec3 fade_xyz = fade(Pf0);\n  vec4 n_z = mix(vec4(n000, n100, n010, n110), vec4(n001, n101, n011, n111), fade_xyz.z);\n  vec2 n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);\n  float n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x);\n  return 2.2 * n_xyz;\n}\n// Classic Perlin noise, periodic variant\nfloat pnoise(vec3 P, vec3 rep)\n{\n  vec3 Pi0 = mod(floor(P), rep); // Integer part, modulo period\n  vec3 Pi1 = mod(Pi0 + vec3(1.0), rep); // Integer part + 1, mod period\n  Pi0 = mod289(Pi0);\n  Pi1 = mod289(Pi1);\n  vec3 Pf0 = fract(P); // Fractional part for interpolation\n  vec3 Pf1 = Pf0 - vec3(1.0); // Fractional part - 1.0\n  vec4 ix = vec4(Pi0.x, Pi1.x, Pi0.x, Pi1.x);\n  vec4 iy = vec4(Pi0.yy, Pi1.yy);\n  vec4 iz0 = Pi0.zzzz;\n  vec4 iz1 = Pi1.zzzz;\n  vec4 ixy = permute(permute(ix) + iy);\n  vec4 ixy0 = permute(ixy + iz0);\n  vec4 ixy1 = permute(ixy + iz1);\n  vec4 gx0 = ixy0 * (1.0 / 7.0);\n  vec4 gy0 = fract(floor(gx0) * (1.0 / 7.0)) - 0.5;\n  gx0 = fract(gx0);\n  vec4 gz0 = vec4(0.5) - abs(gx0) - abs(gy0);\n  vec4 sz0 = step(gz0, vec4(0.0));\n  gx0 -= sz0 * (step(0.0, gx0) - 0.5);\n  gy0 -= sz0 * (step(0.0, gy0) - 0.5);\n  vec4 gx1 = ixy1 * (1.0 / 7.0);\n  vec4 gy1 = fract(floor(gx1) * (1.0 / 7.0)) - 0.5;\n  gx1 = fract(gx1);\n  vec4 gz1 = vec4(0.5) - abs(gx1) - abs(gy1);\n  vec4 sz1 = step(gz1, vec4(0.0));\n  gx1 -= sz1 * (step(0.0, gx1) - 0.5);\n  gy1 -= sz1 * (step(0.0, gy1) - 0.5);\n  vec3 g000 = vec3(gx0.x,gy0.x,gz0.x);\n  vec3 g100 = vec3(gx0.y,gy0.y,gz0.y);\n  vec3 g010 = vec3(gx0.z,gy0.z,gz0.z);\n  vec3 g110 = vec3(gx0.w,gy0.w,gz0.w);\n  vec3 g001 = vec3(gx1.x,gy1.x,gz1.x);\n  vec3 g101 = vec3(gx1.y,gy1.y,gz1.y);\n  vec3 g011 = vec3(gx1.z,gy1.z,gz1.z);\n  vec3 g111 = vec3(gx1.w,gy1.w,gz1.w);\n  vec4 norm0 = taylorInvSqrt(vec4(dot(g000, g000), dot(g010, g010), dot(g100, g100), dot(g110, g110)));\n  g000 *= norm0.x;\n  g010 *= norm0.y;\n  g100 *= norm0.z;\n  g110 *= norm0.w;\n  vec4 norm1 = taylorInvSqrt(vec4(dot(g001, g001), dot(g011, g011), dot(g101, g101), dot(g111, g111)));\n  g001 *= norm1.x;\n  g011 *= norm1.y;\n  g101 *= norm1.z;\n  g111 *= norm1.w;\n  float n000 = dot(g000, Pf0);\n  float n100 = dot(g100, vec3(Pf1.x, Pf0.yz));\n  float n010 = dot(g010, vec3(Pf0.x, Pf1.y, Pf0.z));\n  float n110 = dot(g110, vec3(Pf1.xy, Pf0.z));\n  float n001 = dot(g001, vec3(Pf0.xy, Pf1.z));\n  float n101 = dot(g101, vec3(Pf1.x, Pf0.y, Pf1.z));\n  float n011 = dot(g011, vec3(Pf0.x, Pf1.yz));\n  float n111 = dot(g111, Pf1);\n  vec3 fade_xyz = fade(Pf0);\n  vec4 n_z = mix(vec4(n000, n100, n010, n110), vec4(n001, n101, n011, n111), fade_xyz.z);\n  vec2 n_yz = mix(n_z.xy, n_z.zw, fade_xyz.y);\n  float n_xyz = mix(n_yz.x, n_yz.y, fade_xyz.x);\n  return 2.2 * n_xyz;\n}\n\tfloat stripes( float x, float f) {\n\t\tfloat PI = 3.14159265358979323846264;\n\t\tfloat t = .5 + .5 * sin( f * 2.0 * PI * x);\n\t\treturn t * t - .5;\n\t}\n\tfloat turbulence( vec3 p ) {\n\t\tfloat w = 100.0;\n\t\tfloat t = -.5;\n\t\tfor (float f = 1.0 ; f <= 10.0 ; f++ ){\n\t\t\tfloat power = pow( 2.0, f );\n\t\t\tt += abs( pnoise( vec3( power * p ), vec3( 10.0, 10.0, 10.0 ) ) / power );\n\t\t}\n\t\treturn t;\n\t}\n\tfloat f( vec3 p ) {\n\t\treturn pnoise( vec3( p ), vec3( 10.0, 10.0, 10.0 ) );\n\t\treturn pnoise( 8.0 * vec3( p ), vec3( 10.0, 10.0, 10.0 ) );\n\t}\n\tvarying vec2 vUv;\n\tvarying vec3 vNormal;\n\tvarying vec3 vReflect;\n\tvarying float ao;\n\tuniform float time;\n\tuniform float weight;\n\tfloat fround( float value ) {\n\t\treturn floor( value + 0.5 );\n\t}\n\tvec3 v3round( vec3 value ) {\n\t\treturn vec3( fround( value.x ), fround( value.y ), fround( value.z ) );\n\t}\n\tvoid main() {\n\t\tvec3 evNormal = normal;\n\t\tvec3 aniNormal = 2.0 * evNormal + time;\n\t\tfloat f0 = weight * f( aniNormal );\n\t\tfloat fx = weight * f( aniNormal + vec3( .0001, 0.0, 0.0 ) );\n\t\tfloat fy = weight * f( aniNormal + vec3( 0.0, .0001, 0.0 ) );\n\t\tfloat fz = weight * f( aniNormal + vec3( 0.0, 0.0, .0001 ) );\n\t\tvec3 modifiedNormal = normalize( evNormal - vec3( (fx - f0) / .0001, (fy - f0) / .0001, (fz - f0) / .0001 ) );\n\t\tif( weight > 0.0 ) {\n\t\t\tao = f0 / weight;\n\t\t} else {\n\t\t\tao = 0.0;\n\t\t}\n\t\tvNormal = modifiedNormal;\n\t\tvUv = uv;\n\t\tvec3 newPosition = position + f0 * evNormal;\n\t\tvec3 nWorld = normalize( mat3( modelMatrix[0].xyz, modelMatrix[1].xyz, modelMatrix[2].xyz ) * modifiedNormal );\n\t\tvReflect = normalize( reflect( normalize( newPosition.xyz - cameraPosition ), nWorld ) );\n\t\tgl_Position = projectionMatrix * modelViewMatrix * vec4( newPosition, 1.0 );\n\t}"]);
+let noiseFragment = glsl(["#define GLSLIFY 1\nvarying vec2 vUv;\nvarying vec3 vNormal;\nvarying vec3 vReflect;\nvarying float ao;\nuniform float time;\nfloat PI = 3.14159265358979323846264;\nvoid main() {\n  float yaw = .5 - atan( vReflect.z, - vReflect.x ) / ( 2.0 * PI );\n  float pitch = .5 - asin( vReflect.y ) / PI;\n  vec2 pos = vec2( yaw, pitch );\n  float diffuse_value1 = .000015 * max(dot(vNormal, vec3( -490.0, 29.8, -85.8 ) ), 0.0);\n  float diffuse_value2 = .000005 * max(dot(vNormal, vec3( -460.0, 40.27, 187.4 ) ), 0.0);\n  float diffuse_value3 = .000010 * max(dot(vNormal, vec3( 175.5, 30.04, 466.4 ) ), 0.0);\n  float diffuse_value4 = .000005 * max(dot(vNormal, vec3( 466.0, 45.3, 172.9 ) ), 0.0);\n  gl_FragColor = vec4( pos[1]*0.5 - .15 * ao + .5 * vec3( diffuse_value1 + diffuse_value2 + diffuse_value3 + diffuse_value4 ), 1.0 );\n}"]);
+
+$(document).ready(()=>{
+    //Initialise the 3D scene
+    init3D();
+
 });
+
+
 
 //Three.js 3D scene
 function init3D() {
-				//Setup the renderer
-				container = document.getElementById('threeScene');
-				renderer = new THREE.WebGLRenderer();
-				renderer.setSize(window.innerWidth, window.innerHeight);
-				container.appendChild(renderer.domElement);
+    //Setup the renderer
+	container = document.getElementById( 'threeScene' );
+    renderer = new THREE.WebGLRenderer();
+	renderer.setSize( window.innerWidth, window.innerHeight );
+    container.appendChild( renderer.domElement );
 
-				//Setup the scene
-				scene = new THREE.Scene();
+    //Setup the scene
+	scene = new THREE.Scene();
 
-				//Setup the camera
-				camera = new THREE.PerspectiveCamera(fov, window.innerWidth / window.innerHeight, 1, 10000);
-				camera.position.z = 10;
-				camera.target = new THREE.Vector3(0, 0, 0);
-				scene.add(camera);
+    //Setup the camera
+    camera = new THREE.PerspectiveCamera( fov, window.innerWidth / window.innerHeight, 1, 10000 );
+	camera.position.z = 15;
+	camera.target = new THREE.Vector3( 0, 0, 0 );
+	scene.add( camera );
 
-				//Noise Shader material
-				material = new THREE.ShaderMaterial({
+    //Noise Shader material
+	material = new THREE.ShaderMaterial( {
 
-								uniforms: {
-												time: { type: "f", value: 1 },
-												weight: { type: "f", value: 5 }
-								},
+		uniforms: {
+			time: { type: "f", value: 1 },
+			weight: { type: "f", value: 5 }
+		},
 
-								vertexShader: document.getElementById('vertexShader').textContent,
-								fragmentShader: document.getElementById('fragmentShader').textContent,
-								wireframe: true
+    vertexShader: noiseVertex,
+	fragmentShader: noiseFragment,
+    wireframe: true
 
-				});
+	});
 
-				//Geomtery
-				mesh = new THREE.Mesh(new THREE.IcosahedronGeometry(20, 5), material);
-				scene.add(mesh);
+    //Geomtery
+	mesh = new THREE.Mesh( new THREE.IcosahedronGeometry( 20, 5 ), material );
+	scene.add( mesh );
 
-				//Event Listeners
-				window.addEventListener('resize', onWindowResize, false);
+    //Event Listeners
+	window.addEventListener( 'resize', onWindowResize, false );
 
-				render();
+	render();
+
 }
 
 function onWindowResize() {
-				renderer.setSize(window.innerWidth, window.innerHeight);
-				camera.projectionMatrix.makePerspective(fov, window.innerWidth / window.innerHeight, 1, 1100);
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	camera.projectionMatrix.makePerspective( fov, window.innerWidth / window.innerHeight, 1, 1100 );
 }
 
 var start = Date.now();
 
 function render() {
-				//Update the shader's uniforms
-				material.uniforms['weight'].value = 5;
-				material.uniforms['time'].value = (Date.now() - start) * 0.0001;
+    //Update the shader's uniforms
+    material.uniforms[ 'weight' ].value = 5;
+	material.uniforms[ 'time' ].value =  (Date.now() - start)*0.0001;
 
-				renderer.render(scene, camera);
+    renderer.render(scene, camera);
 
-				requestAnimationFrame(render);
+    requestAnimationFrame( render );
 }
-
-},{"./projects":4,"glslify":1,"jquery":2}],4:[function(require,module,exports){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-var projects = {
-    "Tzina": {
-        year: 2016,
-        role: "Technical Director",
-        tags: "#WebGL, #WebVR, #Documentary",
-        description: "",
-        crew: {
-            director: "Shirin Anlen",
-            design: "Ziv Schneider",
-            dev: "Avner Peled",
-            animation: "Laura Juo-Hsin Chen"
-        }
-    },
-    "Myth": {
-        year: 2015,
-        role: "Director & Developer",
-        tags: "#WebGL, #WebVR, #Music",
-        description: ""
-    },
-    "When We Land": {
-        year: 2015,
-        role: "Technical Director",
-        tags: "#GearVR, #Unity3D, #Music",
-        description: ""
-    },
-    "SONO": {
-        year: 2017,
-        role: "Director & Developer",
-        tags: "#WebGL, #WebVR, #Music",
-        description: ""
-    }
-};
-
-var experiments = {};
-
-exports.projects = projects;
-exports.experiments = experiments;
-
-},{}]},{},[3]);
+},{"glslify":1,"jquery":2}]},{},[3]);
